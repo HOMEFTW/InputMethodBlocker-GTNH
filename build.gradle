@@ -1,0 +1,19 @@
+plugins {
+    id 'com.github.ElytraServers.elytra-conventions' version 'v1.1.2'
+    id 'com.gtnewhorizons.gtnhconvention'
+}
+
+afterEvaluate {
+    if (project.hasProperty('modVersion')) {
+        project.version = project.property('modVersion')
+    }
+}
+
+minecraft {
+    extraRunJvmArguments.add("-Xmx4G")
+    extraRunJvmArguments.add("-Xms4G")
+}
+
+test {
+    useJUnitPlatform()
+}

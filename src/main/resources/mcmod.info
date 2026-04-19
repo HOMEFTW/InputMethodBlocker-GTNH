@@ -1,0 +1,9 @@
+[
+  {
+    "modid": "inputmethodblockergtnh",
+    "name": "InputMethodBlocker-GTNH",
+    "version": "${modVersion}",
+    "mcversion": "1.7.10",
+    "description": "IME switching support for GTNH text input UIs on Java 17-25."
+  }
+]
