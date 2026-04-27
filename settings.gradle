@@ -8,8 +8,11 @@ pluginManagement {
                 includeGroupByRegex("com\\.gtnewhorizons\\..+")
             }
         }
+        maven {
+            name "Tencent Maven Mirror"
+            url "https://mirrors.cloud.tencent.com/nexus/repository/maven-public/"
+        }
         gradlePluginPortal()
-        mavenCentral()
         maven {
             name "Jitpack"
             url "https://jitpack.io"

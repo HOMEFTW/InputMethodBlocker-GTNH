@@ -59,6 +59,38 @@ class ModSearchTextFieldDetectorTest {
         assertFalse(new ModSearchTextFieldDetector().hasFocusedTextInput(new FakeInvseeScreen()));
     }
 
+    @Test
+    void defaultWhitelistDetectsAngelicaGuiTextFieldsWithObfuscatedFocusMethod() {
+        assertTrue(
+            new ModSearchTextFieldDetector()
+                .hasFocusedTextInput(new com.gtnewhorizons.angelica.client.gui.FontConfigScreen(false, true)));
+    }
+
+    @Test
+    void defaultWhitelistDetectsNeiOptionTextFields() {
+        assertTrue(new ModSearchTextFieldDetector().hasFocusedTextInput(new codechicken.nei.config.GuiOptionList(true)));
+    }
+
+    @Test
+    void defaultWhitelistDetectsNeiPresetFields() {
+        assertTrue(
+            new ModSearchTextFieldDetector()
+                .hasFocusedTextInput(new codechicken.nei.config.preset.GuiPresetSettings(true, false)));
+        assertTrue(
+            new ModSearchTextFieldDetector()
+                .hasFocusedTextInput(new codechicken.nei.config.preset.GuiPresetSettings(false, true)));
+    }
+
+    @Test
+    void defaultWhitelistDetectsNeiDebugHandlerIntegerFields() {
+        codechicken.nei.recipe.debug.DebugHandlerWidget.instance =
+            new codechicken.nei.recipe.debug.DebugHandlerWidget(true);
+
+        assertTrue(
+            new ModSearchTextFieldDetector()
+                .hasFocusedTextInput(new net.minecraft.client.gui.inventory.GuiContainer()));
+    }
+
     private static final class FakeAngelicaScreen {
 
         @SuppressWarnings("unused")

@@ -34,6 +34,10 @@ public class ModSearchTextFieldDetector extends WhitelistedReflectiveTextFieldDe
             "me.flashyreese.mods.reeses_sodium_options.client.gui.ReeseSodiumVideoOptionsScreen",
             new String[] { "searchTextField" });
         screens.put("codechicken.nei.GuiPotionCreator", new String[] { "durationField" });
+        screens.put("codechicken.nei.config.GuiOptionList", new String[] { "slot.options.textField" });
+        screens.put(
+            "codechicken.nei.config.preset.GuiPresetSettings",
+            new String[] { "leftPanel.nameField", "rightPanel.searchField" });
         screens.put("serverutils.lib.gui.misc.GuiButtonListBase", new String[] { "searchBox" });
         screens.put("serverutils.lib.gui.misc.GuiSelectItemStack", new String[] { "searchBox" });
         screens.put("serverutils.client.gui.teams.GuiCreateTeam", new String[] { "textBoxId" });
@@ -54,6 +58,11 @@ public class ModSearchTextFieldDetector extends WhitelistedReflectiveTextFieldDe
                 "codechicken.nei.recipe.GuiRecipe",
                 "codechicken.nei.recipe.GuiRecipe",
                 new String[] { "searchField" }));
+        bindings.add(
+            new StaticFieldBinding(
+                "net.minecraft.client.gui.inventory.GuiContainer",
+                "codechicken.nei.recipe.debug.DebugHandlerWidget",
+                new String[] { "instance.container.widgets" }));
         return Collections.unmodifiableList(bindings);
     }
 
@@ -70,6 +79,7 @@ public class ModSearchTextFieldDetector extends WhitelistedReflectiveTextFieldDe
     private static Set<String> createFocusMethodNames() {
         Set<String> methods = new HashSet<>();
         methods.add("isFocused");
+        methods.add("func_146206_l");
         methods.add("focused");
         return Collections.unmodifiableSet(methods);
     }

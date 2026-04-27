@@ -1,5 +1,6 @@
 package com.github.skystardust.inputmethodblockergtnh.compat;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -69,8 +70,7 @@ abstract class WhitelistedReflectiveTextFieldDetector implements FocusDetector {
 
     private boolean hasFocusedWhitelistedField(Object screen, String[] fieldNames) {
         for (String fieldName : fieldNames) {
-            Object fieldValue = findFieldValue(screen, fieldName);
-            if (fieldValue != null && isFocusedTextField(fieldValue)) {
+            if (hasFocusedFieldPath(screen, fieldName)) {
                 return true;
             }
         }
@@ -84,13 +84,78 @@ abstract class WhitelistedReflectiveTextFieldDetector implements FocusDetector {
         }
 
         for (String fieldName : fieldNames) {
-            Object fieldValue = findStaticFieldValue(ownerClass, fieldName);
-            if (fieldValue != null && isFocusedTextField(fieldValue)) {
+            if (hasFocusedStaticFieldPath(ownerClass, fieldName)) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    private boolean hasFocusedStaticFieldPath(Class<?> ownerClass, String fieldPath) {
+        String[] pathSegments = fieldPath.split("\\.", 2);
+        Object fieldValue = findStaticFieldValue(ownerClass, pathSegments[0]);
+        if (fieldValue == null) {
+            return false;
+        }
+
+        if (pathSegments.length == 1) {
+            return isFocusedTextField(fieldValue);
+        }
+
+        return hasFocusedFieldPath(fieldValue, pathSegments[1]);
+    }
+
+    private boolean hasFocusedFieldPath(Object root, String fieldPath) {
+        List<Object> candidates = new ArrayList<>();
+        candidates.add(root);
+
+        String[] pathSegments = fieldPath.split("\\.");
+        for (String pathSegment : pathSegments) {
+            List<Object> nextCandidates = new ArrayList<>();
+            for (Object candidate : candidates) {
+                Object fieldValue = findFieldValue(candidate, pathSegment);
+                addCandidateValues(nextCandidates, fieldValue);
+            }
+
+            if (nextCandidates.isEmpty()) {
+                return false;
+            }
+
+            candidates = nextCandidates;
+        }
+
+        for (Object candidate : candidates) {
+            if (isFocusedTextField(candidate)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void addCandidateValues(List<Object> candidates, Object fieldValue) {
+        if (fieldValue == null) {
+            return;
+        }
+
+        Class<?> valueClass = fieldValue.getClass();
+        if (valueClass.isArray()) {
+            int length = Array.getLength(fieldValue);
+            for (int i = 0; i < length; i++) {
+                addCandidateValues(candidates, Array.get(fieldValue, i));
+            }
+            return;
+        }
+
+        if (fieldValue instanceof Iterable<?>) {
+            for (Object value : (Iterable<?>) fieldValue) {
+                addCandidateValues(candidates, value);
+            }
+            return;
+        }
+
+        candidates.add(fieldValue);
     }
 
     private Object findFieldValue(Object target, String fieldName) {

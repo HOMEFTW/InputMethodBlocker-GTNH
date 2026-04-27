@@ -5,7 +5,10 @@
 - 模组 ID：`inputmethodblockergtnh`
 - 根包名：`com.github.skystardust.inputmethodblockergtnh`
 - 目标环境：Minecraft 1.7.10 + GTNH，Java 17-25 运行环境
-- 当前阶段：首版实现已完成并完成修复后重新打包，待 Windows 客户端手动验证
+- 构建 JDK：通过 `JAVA_HOME` 提供，当前记录为 Zulu21
+- 镜像配置：Gradle wrapper 使用 `https://mirrors.cloud.tencent.com/gradle/gradle-8.14.3-bin.zip`，Maven 解析入口使用 `https://mirrors.cloud.tencent.com/nexus/repository/maven-public/`
+- 当前版本：`0.2.0`
+- 当前阶段：核心实现、native x64 重写、首批白名单兼容、AE2/AE2Things/AE2FluidCraft Rework、NEI、Twist Space Technology 与 Programmable Hatches 白名单补全已完成；AE2Things 无线连接终端、无线二合一接口终端与背包终端剩余焦点已补齐；原版与 Angelica 通用搜索白名单的 `func_146206_l` 焦点方法遗漏已修复，仍待 Windows 客户端实机复测
 
 ## 已实现内容
 
@@ -46,51 +49,44 @@
 - 条件检测层：`ConditionalFocusDetector`
 - 兼容层：`VanillaTextFieldDetector`、`ModSearchTextFieldDetector`、`AeTerminalTextFieldDetector`、`ModularUi1TextFieldDetector`、`ModularUi2TextFieldDetector`
 - 兼容辅助层：`WhitelistedReflectiveTextFieldDetector`
-- 测试：元数据、平台判定、IME bridge、焦点聚合、`FocusArchitectureGuardTest`、`ConditionalFocusDetector`、`VanillaTextFieldDetector` 白名单回归、`ModSearchTextFieldDetector` 白名单回归、`AeTerminalTextFieldDetector` 白名单回归、MUI1/MUI2 白名单回归、客户端事件处理
+- native 源码与脚本：`native/windows-x64/InputMethodBlocker-Natives-x64.cpp`、`native/windows-x64/build-native.ps1`
 
-## 依赖与兼容目标
-- 计划使用 GTNH 标准构建链 `gtnhconvention`
-- 计划兼容原版 `GuiTextField`
-- 计划兼容 MUI1：`com.gtnewhorizons.modularui`
-- 计划兼容 MUI2：`com.cleanroommc.modularui`
-- 继续分发旧版 Windows DLL：`InputMethodBlocker-Natives-x86.dll`、`InputMethodBlocker-Natives-x64.dll`
-- 测试依赖：`org.junit.jupiter:junit-jupiter-api:5.10.2`、`org.junit.jupiter:junit-jupiter-engine:5.10.2`
+## 白名单兼容状态
+- `VanillaTextFieldDetector` 使用旧模组式原版 GUI 白名单，不再对任意原版 GUI 做通用反射扫描；聚焦文本框的焦点方法支持 `isFocused` 与 Minecraft 1.7.10 运行时 obf 名 `func_146206_l`。
+- `ModSearchTextFieldDetector` 已实现 Angelica、NEI、ServerUtilities 的首批搜索框与输入框白名单，支持实例字段、静态字段与静态入口后的点分字段路径；焦点方法支持 `isFocused`、Minecraft 1.7.10 运行时 obf 名 `func_146206_l` 与 NEI 旧式 `focused`。
+- `AeTerminalTextFieldDetector` 已实现 AE2 / AE2Things 终端搜索框白名单，支持 `net.minecraft.client.gui.GuiTextField`、`appeng.client.gui.widgets.MEGuiTextField`、`com.asdflj.ae2thing.client.gui.widget.METextField`、`com.asdflj.ae2thing.client.gui.widget.THGuiTextField`、`com.glodblock.github.client.gui.FCGuiTextField`；焦点方法支持 `isFocused` 与 Minecraft 1.7.10 运行时 obf 名 `func_146206_l`。
+- `AeTerminalTextFieldDetector` 当前覆盖 AE2 原生 `GuiAmount.amountTextField`、`GuiCellRestriction.amountField/typesField`、`GuiCraftingCPU.searchField`、`GuiCraftConfirm.searchField`、`GuiLevelEmitter.amountTextField`、`GuiMEMonitorable.searchField`、`GuiOptimizePatterns.amountToCraft`、`GuiOreFilter.textField`、`GuiPatternItemRenamer.textField`、`GuiQuartzKnife.textField`、`GuiRenamer.textField`、`GuiInterfaceTerminal` 三个搜索字段。
+- `AeTerminalTextFieldDetector` 当前覆盖 AE2Things `GuiMonitor.searchField`、`GuiBaseInterfaceWireless` 三个搜索字段、`GuiWirelessConnectorTerminal.searchField/components.textField/clickables`、`GuiWirelessDistributor.searchField/components.textField`、`GuiWirelessDualInterfaceTerminal.searchFieldInputs/searchFieldOutputs/searchFieldNames/itemPanel.searchField/panels.searchField`、背包终端 `GuiCraftingTerminal.searchField`、`GuiAmount.amountBox`、`GuiPatternValueName.textField`、`GuiRenamer.textField`、`GuiFluidPacketEncoder.level`。
+- `AeTerminalTextFieldDetector` 当前覆盖 Fluid Craft / AE2FluidCraft Rework 兼容路径：`com.glodblock.github.client.gui.base.FCGuiAmount.amountBox`、`com.glodblock.github.client.gui.base.FCGuiMonitor.searchField`、`com.glodblock.github.client.gui.GuiLevelTerminal.searchFieldOutputs/searchFieldNames`、`com.glodblock.github.client.gui.GuiLevelMaintainer.focusedWidget.textField`、`com.glodblock.github.client.gui.GuiFluidLevelEmitter.amountTextField`、`com.glodblock.github.client.gui.GuiRenamer.textField`、`com.glodblock.github.client.gui.GuiMagnetFilter.oreDict`。
+- `ModSearchTextFieldDetector` 当前覆盖 NEI `LayoutManager.searchField/quantity`、`GuiRecipe.searchField`、`GuiPotionCreator.durationField`、`GuiOptionList.slot.options.textField`、`GuiPresetSettings.leftPanel.nameField/rightPanel.searchField`、`DebugHandlerWidget.instance.container.widgets`。
+- `ModularUi1TextFieldDetector` 已覆盖 MUI1 运行时焦点路径 `com.gtnewhorizons.modularui.common.internal.wrapper.ModularGui.context.cursor.focused`，用于识别当前聚焦的 `com.gtnewhorizons.modularui.common.widget.textfield.TextFieldWidget` 与 `com.gtnewhorizons.modularui.common.widget.textfield.BaseTextFieldWidget` 后代；该路径覆盖 Twist Space Technology 中 `GT_Hatch_WirelessData_input`、`DynamicSpeedController`、`DynamicParallelController`、`TST_MegaCraftingCenter`、`TST_StrangeMatterAggregator` 等 MUI1 文本输入场景，并覆盖 Programmable Hatches 中原生 MUI1 `NumericWidget` 与 `reobf.proghatches.gt.metatileentity.util.polyfill.NumericWidget` 数值输入场景。
+- `ModularUi2TextFieldDetector` 已改为白名单 screen/field 检测，当前默认白名单为空。
+- `WhitelistedReflectiveTextFieldDetector` 已支持继承链类型匹配、静态字段白名单、多焦点方法名、多字段任一命中、点分字段路径、数组与 `Iterable` 候选展开。
 
 ## 架构说明
-- 已按 `mod/proxy`、`ime`、`focus`、`compat` 四层拆分
-- `ime` 层统一负责 Windows DLL 加载和 native 调用
-- `WindowsImeBridge` 已对齐旧模组初始化语义：成功加载 DLL 后立即执行一次 `inactiveInputMethod("")`，并同步 `currentActive = false`
-- `focus` 层统一输出“当前是否应启用输入法”
-- `InputFocusService` 现已改为对 `inactive` 状态持续发布，配合 `WindowsImeBridge` 的重复 `inactive` 调用，在非输入状态下持续压制 IME
-- `ClientEventHandler` 现已输出诊断日志：screen 类名、命中的 detector、期望 IME 状态与 bridge 可用性
-- `WindowsImeBridge` 现已输出诊断日志：初始化成功、native 调用计数、bridge 不可用告警
-- `ConditionalFocusDetector` 用于按运行条件启用特定 detector，当前用于限制 AE / MUI 检测仅在游戏内生效
-- `VanillaTextFieldDetector` 已改为旧模组式白名单原版 GUI 检测，不再对任意原版 GUI 做通用反射扫描
-- 除 `VanillaTextFieldDetector` 外，其余 detector 均作为 compat 层，由 `ClientProxy` 按模组是否已加载或类是否可用再决定是否注册
-- `ModSearchTextFieldDetector` 已实现 Angelica、NEI、ServerUtilities 的首批搜索框与输入框白名单，支持实例字段与静态字段两种白名单形式，并仅在相关模组已加载时注册
-- `AeTerminalTextFieldDetector` 已实现 AE2 / AE2Things 终端搜索框白名单，支持 `MEGuiTextField` 与 `THGuiTextField`，并仅在 AE2 / AE2Things 已加载时注册
-- `ModularUi1TextFieldDetector` 与 `ModularUi2TextFieldDetector` 已改为白名单 screen/field 检测，当前默认白名单为空，并仅在对应类可用时注册
-- `WhitelistedReflectiveTextFieldDetector` 已支持继承链类型匹配、静态字段白名单、多焦点方法名与多字段任一命中
-- 运行产物中已移除遗留的通用反射扫描实现，所有 GUI 输入焦点检测都必须通过白名单扩展
-- `compat` 层负责普通模组 GUI、AE 终端、MUI1/MUI2 的白名单文本焦点探测；原版 GUI 独立归为基础层
-- 已确认实现计划文档：`docs/superpowers/plans/2026-04-19-inputmethodblocker-gtnh-implementation.md`
-- `ClientProxy` 通过 `FMLCommonHandler.instance().bus()` 注册 `ClientEventHandler`
-- 当前已验证 `test` 与 `compileJava` 通过
-- 当前已验证 `assemble` 通过，最新产物位于 `build/libs/inputmethodblockergtnh-0.1.0.jar`
-- 当前未完成项：Windows 客户端验证开始界面不卡死与输入框切换、`spotlessCheck` 异常排查
-## 当前实现状态补充
-- 已新增 native 重写设计文档：`docs/superpowers/specs/2026-04-20-native-ime-rewrite-design.md`
-- 已新增 native 重写实施计划：`docs/superpowers/plans/2026-04-20-native-ime-rewrite-implementation.md`
-- 已实现 native 构建脚本：`native/windows-x64/build-native.ps1`
-- 已实现 native 源码：`native/windows-x64/InputMethodBlocker-Natives-x64.cpp`
-- 已移除 `src/main/resources/InputMethodBlocker-Natives-x86.dll`
-- 已重建 `src/main/resources/InputMethodBlocker-Natives-x64.dll`
+- 已按 `mod/proxy`、`ime`、`focus`、`compat` 四层拆分。
+- `ime` 层统一负责 Windows DLL 加载和 native 调用。
+- `WindowsImeBridge` 已对齐旧模组初始化语义：成功加载 DLL 后立即执行一次 `inactiveInputMethod("")`，并同步 `currentActive = false`。
+- `InputFocusService` 已改为对 `inactive` 状态持续发布，配合 `WindowsImeBridge` 的重复 `inactive` 调用，在非输入状态下持续压制 IME。
+- `ClientEventHandler` 与 `WindowsImeBridge` 已输出诊断日志，用于区分焦点层、bridge 层与 native 层问题。
+- 除 `VanillaTextFieldDetector` 外，其余 detector 均作为 compat 层，由 `ClientProxy` 按模组是否已加载或类是否可用决定是否注册。
+- 运行产物中已移除遗留的通用反射扫描实现，所有 GUI 输入焦点检测都必须通过白名单扩展。
 
-## 架构补充说明
-- 下一阶段将只替换 Windows x64 native DLL，保持 Java 侧白名单 detector 与 compat 层架构不变
-- 新 native 设计采用窗口级 IME context detach / restore，目标是在非白名单状态下阻断 `Shift` 等切换键使 IME 挂回 Minecraft 窗口
-- 继续复用 `com.github.skystardust.InputMethodBlocker.NativeUtils` 的 JNI ABI，避免大规模改动 Java 桥接层
-- 当前 native 构建脚本优先使用已安装的 MinGW-w64，找不到时再尝试 MSVC Build Tools
-- 当前产物已重新打包为 `build/libs/inputmethodblockergtnh-0.1.0.jar`
+## 已验证命令
+- `./gradlew.bat test --tests com.github.skystardust.inputmethodblockergtnh.compat.VanillaTextFieldDetectorTest --tests com.github.skystardust.inputmethodblockergtnh.compat.ModSearchTextFieldDetectorTest`
+- `./gradlew.bat test --tests com.github.skystardust.inputmethodblockergtnh.compat.*`
+- `./gradlew.bat test --tests com.github.skystardust.inputmethodblockergtnh.compat.AeTerminalTextFieldDetectorTest`
+- `./gradlew.bat test --tests com.github.skystardust.inputmethodblockergtnh.compat.AeTerminalTextFieldDetectorTest --tests com.github.skystardust.inputmethodblockergtnh.compat.ModSearchTextFieldDetectorTest`
+- `./gradlew.bat test --tests com.github.skystardust.inputmethodblockergtnh.compat.ModularUi1TextFieldDetectorTest`
+- `./gradlew.bat test assemble`
+- `./gradlew.bat assemble`
 
----
+## 当前打包产物
+- 运行用 jar：`build/libs/inputmethodblockergtnh-0.2.0.jar`
+- 开发环境 jar：`build/libs/inputmethodblockergtnh-0.2.0-dev.jar`
+- 源码 jar：`build/libs/inputmethodblockergtnh-0.2.0-sources.jar`
+
+## 当前未完成项
+- Windows 客户端实机验证主菜单、游戏内非输入状态、原版白名单、AE2、AE2Things、Angelica、NEI、ServerUtilities、MUI1、MUI2 的 IME 行为。
+- 为 MUI1 / MUI2 补充首批实际 screen/field 白名单。
+- 排查并修复 `spotlessCheck` 的 Spotless/脚手架异常。

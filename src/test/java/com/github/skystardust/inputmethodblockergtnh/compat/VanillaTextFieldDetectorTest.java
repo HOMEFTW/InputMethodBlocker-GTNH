@@ -36,6 +36,17 @@ class VanillaTextFieldDetectorTest {
     }
 
     @Test
+    void enablesImeForObfuscatedFocusedWhitelistedTextFields() {
+        Map<String, String[]> focusedScreens = new HashMap<>();
+        focusedScreens.put(FakeObfuscatedGuiRepair.class.getName(), new String[] { "textField" });
+        VanillaTextFieldDetector detector = new VanillaTextFieldDetector(
+            Collections.emptySet(),
+            focusedScreens);
+
+        assertTrue(detector.hasFocusedTextInput(new FakeObfuscatedGuiRepair(true)));
+    }
+
+    @Test
     void ignoresUnfocusedWhitelistedTextFields() {
         Map<String, String[]> focusedScreens = new HashMap<>();
         focusedScreens.put(FakeGuiRepair.class.getName(), new String[] { "textField" });
@@ -79,6 +90,16 @@ class VanillaTextFieldDetectorTest {
         }
     }
 
+    private static final class FakeObfuscatedGuiRepair {
+
+        @SuppressWarnings("unused")
+        private final ObfuscatedFakeTextField textField;
+
+        private FakeObfuscatedGuiRepair(boolean focused) {
+            this.textField = new ObfuscatedFakeTextField(focused);
+        }
+    }
+
     private static final class FakeTextField {
 
         private final boolean focused;
@@ -88,6 +109,19 @@ class VanillaTextFieldDetectorTest {
         }
 
         public boolean isFocused() {
+            return focused;
+        }
+    }
+
+    private static final class ObfuscatedFakeTextField {
+
+        private final boolean focused;
+
+        private ObfuscatedFakeTextField(boolean focused) {
+            this.focused = focused;
+        }
+
+        public boolean func_146206_l() {
             return focused;
         }
     }

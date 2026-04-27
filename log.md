@@ -1,5 +1,207 @@
 # 开发日志
 
+## 2026-04-27：发布 `0.2.0`
+
+### 已完成
+- 将 `gradle.properties` 中的 `modVersion` 提升到 `0.2.0`。
+- 准备重新执行 `test assemble`，生成 `inputmethodblockergtnh-0.2.0.jar` 作为 GitHub Release 资产。
+- 准备将当前白名单修复推送到 GitHub，并创建 `0.2.0` 发布版本。
+
+### 已做决定
+- 本次 release 使用标签 `v0.2.0`，Release 标题使用 `0.2.0`，运行用资产为非 `dev`、非 `sources` 的 `inputmethodblockergtnh-0.2.0.jar`。
+
+---
+
+## 2026-04-27：检查并修复其他白名单焦点方法遗漏
+
+### 已完成
+- 审计当前所有白名单 detector，重点检查是否存在支持 `net.minecraft.client.gui.GuiTextField` 却只调用 `isFocused` 的同类问题。
+- 确认 `VanillaTextFieldDetector` 与 `ModSearchTextFieldDetector` 仍存在同类风险：原版修复铁砧/创造搜索框、Angelica `FontConfigScreen.searchBox/testArea` 等入口在 1.7.10 重混淆运行时可能只暴露 `func_146206_l`。
+- 为 `VanillaTextFieldDetector` 增加 `isFocused` / `func_146206_l` 双焦点方法回退。
+- 为 `ModSearchTextFieldDetector` 的默认焦点方法集增加 `func_146206_l`，保留 `isFocused` 与 NEI 旧式 `focused` 支持。
+- 增加原版混淆焦点方法测试与 Angelica `GuiTextField` 默认白名单回归测试；先确认红灯，再修复到绿灯。
+
+### 遇到的问题
+- **通用搜索白名单包含原版 `GuiTextField` 类型**：Angelica `FontConfigScreen` 直接使用 Minecraft `GuiTextField`，因此与 AE2Things `THGuiTextField` 一样会受重混淆焦点方法名影响。
+- **ModularUI 白名单不属于同类问题**：MUI1/MUI2 当前检测的是自身 widget 的 `isFocused`，不是继承自 Minecraft `GuiTextField` 的焦点方法。
+
+### 已做决定
+- 只为实际包含原版 `GuiTextField` 的原版/通用搜索/AE 白名单补充 `func_146206_l`；MUI1/MUI2 保持现有 `isFocused` 路径，不额外扩大匹配面。
+
+---
+
+## 2026-04-27：修复 AE2Things `THGuiTextField` 实机焦点识别
+
+### 已完成
+- 根据实机反馈重新定位 AE2Things 无线连接终端、无线二合一接口终端与背包终端搜索框未命中的根因。
+- 确认这些失败入口共同使用 `com.asdflj.ae2thing.client.gui.widget.THGuiTextField`，该类继承自 Minecraft/NEI 文本框，运行时焦点方法会使用 1.7.10 obf 名 `func_146206_l`。
+- 为 `AeTerminalTextFieldDetector` 增加 `func_146206_l` 焦点方法支持，保留原有 `isFocused` 支持。
+- 将测试桩改为模拟实机 `THGuiTextField` 焦点方法名，并覆盖无线连接终端搜索框、无线二合一接口名搜索框、无线二合一物品搜索框、背包终端搜索框。
+
+### 遇到的问题
+- **上一轮测试桩过于理想化**：测试桩直接提供 `isFocused()`，但实机中 `THGuiTextField` 的焦点方法来自 Minecraft `GuiTextField`，重混淆后不是这个方法名，导致单元测试通过而实机未命中。
+
+### 已做决定
+- 仅在 AE 兼容 detector 中增加 `func_146206_l` 作为焦点方法别名，不扩大白名单字段范围，也不恢复通用对象图扫描。
+
+---
+
+## 2026-04-27：补全 AE2Things 三个终端剩余焦点白名单
+
+### 已完成
+- 对照 `D:\Code\GTNH LIB\AE2Things-main` 复查无线连接终端、无线二合一接口终端与背包终端源码。
+- 为 `GuiWirelessConnectorTerminal` 补充 `clickables` 列表入口，覆盖组件名称编辑框以 `METextField` 直接挂在点击组件列表中的情况。
+- 为 `GuiWirelessDualInterfaceTerminal` 显式补充 `searchFieldInputs/searchFieldOutputs/searchFieldNames` 与 `panels.searchField`，覆盖继承搜索框和侧边物品面板搜索框。
+- 为背包终端实际使用的 `GuiCraftingTerminal` 显式补充 `searchField`。
+- 添加无线连接终端 `clickables` 名称输入框与背包终端搜索框的回归测试。
+
+### 遇到的问题
+- **无线连接终端的名称输入框有两条可达路径**：源码中 `Component.textField` 同时也加入 `clickables`，原白名单只覆盖 `components.textField`，在实际焦点排查时不够完整。
+- **背包终端实际复用 `GuiCraftingTerminal`**：虽然 `GuiMonitor.searchField` 可通过继承链覆盖，但白名单缺少背包终端类本身的显式记录，排查时容易遗漏。
+
+### 已做决定
+- 保持显式字段路径策略，只为 AE2Things 已确认的终端类补充入口，不扩大为任意 AE2Things GUI 扫描。
+
+---
+
+## 2026-04-27：重新打包当前兼容白名单版本
+
+### 已完成
+- 执行 `./gradlew.bat assemble` 重新生成当前版本 jar。
+- 确认运行用 jar 为 `build/libs/inputmethodblockergtnh-0.1.0.jar`。
+- 同步生成 `inputmethodblockergtnh-0.1.0-dev.jar` 与 `inputmethodblockergtnh-0.1.0-sources.jar`。
+
+### 遇到的问题
+- **沙箱环境无法写入用户级 Gradle wrapper 缓存锁文件**：首次普通执行失败，改用已授权的 Gradle 执行权限完成打包。
+
+### 已做决定
+- 继续使用 `assemble` 作为发布前打包入口，实际放入客户端 `mods` 目录的文件为非 `dev`、非 `sources` 的 `inputmethodblockergtnh-0.1.0.jar`。
+
+---
+
+## 2026-04-27：补全 Programmable Hatches MUI1 数值输入焦点白名单
+
+### 已完成
+- 对照 `D:\Code\GTNH LIB\Programmable-Hatches-Mod-290-daily-latest` 扫描 MUI1 `TextFieldWidget` 与 `NumericWidget` 使用点。
+- 确认 Programmable Hatches 的自定义 `reobf.proghatches.gt.metatileentity.util.polyfill.NumericWidget` 继承自 MUI1 `BaseTextFieldWidget`，原白名单只匹配 `TextFieldWidget` 会漏掉该类数值输入焦点。
+- 将 `ModularUi1TextFieldDetector` 的受支持输入框类型扩展为 `TextFieldWidget` 与 `BaseTextFieldWidget`，通过继承链匹配覆盖原生 MUI1 `NumericWidget` 与 Programmable Hatches 自定义 `NumericWidget`。
+- 添加 Programmable Hatches 自定义 `NumericWidget` 位于 `ModularGui.context.cursor.focused` 时的回归测试。
+
+### 遇到的问题
+- **Programmable Hatches 的部分数值输入不是 `TextFieldWidget` 子类**：这些焦点对象挂在 MUI1 运行时 cursor 上，但实际类型继承自 `BaseTextFieldWidget`，需要按 MUI1 文本输入基类覆盖。
+
+### 已做决定
+- 继续沿用 `ModularGui.context.cursor.focused` 显式白名单路径，只扩大可识别的 MUI1 文本输入基类，不恢复窗口 children 的通用扫描。
+
+---
+
+## 2026-04-27：审计并补全 AE2 与 NEI 输入焦点白名单
+
+### 已完成
+- 对照 `D:\Code\GTNH LIB\Applied-Energistics-2-Unofficial-rv3-beta-695-GTNH` 扫描 `MEGuiTextField` / `GuiTextField` 使用点，补全 AE2 原生 GUI 漏项。
+- 新增覆盖 AE2 `GuiCellRestriction.amountField/typesField`、`GuiOreFilter.textField`、`GuiLevelEmitter.amountTextField`、`GuiOptimizePatterns.amountToCraft`、`GuiRenamer.textField`、`GuiQuartzKnife.textField`、`GuiPatternItemRenamer.textField`。
+- 对照 `D:\Code\GTNH LIB\NotEnoughItems-master` 扫描 NEI `TextField` / `SearchField` 使用点，补全配置页、Preset 页和 debug handler 面板漏项。
+- 新增覆盖 NEI `GuiOptionList.slot.options.textField`、`GuiPresetSettings.leftPanel.nameField/rightPanel.searchField`、`DebugHandlerWidget.instance.container.widgets`。
+- 为静态白名单增加点分字段路径支持，使静态入口后面的嵌套 widget 列表也可被显式白名单检测。
+
+### 遇到的问题
+- **AE2 原生 GUI 不止终端搜索框与通用数量框**：部分独立配置/命名 GUI 使用 `textField` 或独立的 `GuiTextField` 字段，原白名单未包含。
+- **NEI 的部分输入框挂在子组件或静态 debug widget 后面**：配置项文本框位于 `GuiOptionList` 的 option 列表内，debug handler 输入框位于静态 `DebugHandlerWidget.instance` 的嵌套容器内。
+
+### 已做决定
+- 继续使用显式字段路径白名单；仅扩展静态字段白名单的点分路径能力，不恢复任意对象图扫描。
+
+---
+
+## 2026-04-27：补全 Twist Space Technology ModularUI 输入焦点白名单
+
+### 已完成
+- 对照 `D:\Code\GTNH LIB\Twist-Space-Technology-Mod-main` 中的 `TextFieldWidget` 使用点，确认 TST 输入焦点来自 ModularUI1 运行时窗口。
+- 为 `ModularUi1TextFieldDetector` 新增默认白名单路径：`com.gtnewhorizons.modularui.common.internal.wrapper.ModularGui.context.cursor.focused`。
+- 覆盖 TST 中 `GT_Hatch_WirelessData_input`、`DynamicSpeedController`、`DynamicParallelController`、`TST_MegaCraftingCenter`、`TST_StrangeMatterAggregator` 等 MUI1 文本输入场景。
+- 添加 MUI1 运行时焦点路径回归测试，确认聚焦的 `TextFieldWidget` 会命中，未聚焦输入框不会命中。
+
+### 遇到的问题
+- **TST 的输入框不是机器类成员字段**：`TextFieldWidget` 直接加入 `ModularWindow.Builder`，运行时焦点保存在 `ModularGui.context.cursor.focused`，不能按 TST 机器类字段白名单处理。
+
+### 已做决定
+- MUI1 白名单只读取当前 cursor 的 focused widget，不扫描窗口 children 列表，避免恢复宽泛对象图扫描。
+
+---
+
+## 2026-04-27：补全 AE2FluidCraft Rework 输入框白名单
+
+### 已完成
+- 对照 `D:\Code\GTNH LIB\AE2FluidCraft-Rework-1.4.120-gtnh` 中的 GUI 输入框声明，补全 `AeTerminalTextFieldDetector` 的 Fluid Craft 白名单覆盖。
+- 新增覆盖 `FCGuiMonitor.searchField`、`GuiLevelTerminal.searchFieldOutputs/searchFieldNames`、`GuiLevelMaintainer.focusedWidget.textField`、`GuiFluidLevelEmitter.amountTextField`、`GuiRenamer.textField`、`GuiMagnetFilter.oreDict`。
+- 为上述 AE2FluidCraft Rework 焦点路径添加回归测试桩，并确认默认白名单可以命中聚焦输入框。
+
+### 遇到的问题
+- **Fluid Craft 输入框分散在基类、继承类与嵌套 widget 中**：仅覆盖 `FCGuiAmount.amountBox` 会漏掉终端搜索、液体等级发信器、重命名器、磁铁过滤器与 Level Maintainer 的实际焦点路径。
+
+### 已做决定
+- 继续使用显式 screen/field 白名单；对嵌套焦点使用点分字段路径 `focusedWidget.textField`，不恢复通用对象图扫描。
+
+---
+
+## 2026-04-27：修复三份项目文档编码
+
+### 已完成
+- 将 `log.md`、`ToDOLIST.md`、`context.md` 从乱码工作区状态恢复为中文内容。
+- 使用 `HEAD` 中仍保持正常中文的版本作为基底，并补回 2026-04-22 构建配置记录与 2026-04-27 AE2Things 白名单补全记录。
+- 使用 UTF-8 无 BOM 写回三份文档，避免 PowerShell 默认编码再次污染中文内容。
+
+### 遇到的问题
+- **工作区版本已经被错误编码写坏**：文件中出现典型 mojibake 标记，无法作为可靠来源继续编辑。
+
+### 已做决定
+- 后续维护三份项目文档时必须显式使用 UTF-8 无 BOM 写入，避免 `Set-Content`、`Out-File` 或默认重定向造成编码漂移。
+
+---
+
+## 2026-04-27：补全 AE2Things 相关输入框白名单
+
+### 已完成
+- 对照 `D:\Code\GTNH LIB\AE2Things-main` 中的 GUI 与 mixin 引用，补全 `AeTerminalTextFieldDetector` 白名单。
+- 新增支持 `appeng.client.gui.implementations.GuiAmount.amountTextField`、`GuiCraftingCPU.searchField`、`GuiCraftConfirm.searchField`。
+- 新增支持 Fluid Craft 兼容路径：`com.glodblock.github.client.gui.FCGuiTextField` 与 `com.glodblock.github.client.gui.base.FCGuiAmount.amountBox`。
+- 为 AE2 原生数量输入、AE2Things 继承的合成状态/确认搜索框、Fluid Craft 数量输入添加回归测试桩。
+- 重新通过 `./gradlew.bat test --tests com.github.skystardust.inputmethodblockergtnh.compat.AeTerminalTextFieldDetectorTest` 与 `./gradlew.bat test assemble`。
+
+### 遇到的问题
+- **AE2Things 的输入框不全在自身 GUI 类中声明**：部分输入框来自 AE2 原生 GUI 继承路径或 Fluid Craft mixin 兼容路径，原先仅覆盖终端搜索框会漏掉这些界面。
+
+### 已做决定
+- 继续沿用显式白名单策略，不恢复通用反射扫描。
+- 对 AE2Things 项目中通过继承或 mixin 触达的 AE2 / Fluid Craft 输入框，也归入 `AeTerminalTextFieldDetector` 的 AE 兼容范围。
+
+---
+
+## 2026-04-22：构建 JDK 切换为 JAVA_HOME / Zulu21
+
+### 已完成
+- 在 `gradle.properties` 中加入 `org.gradle.java.installations.fromEnv = JAVA_HOME`，让 Gradle Java 探测显式跟随环境变量。
+- 当前构建入口要求 `JAVA_HOME` 指向 Zulu21。
+- 保持 Gradle 与 Maven 镜像配置不变。
+
+### 已做决定
+- 不在仓库中硬编码本机 JDK 路径，后续只通过 `JAVA_HOME` 管理构建 JDK。
+
+---
+
+## 2026-04-22：切换 Gradle 与 Maven 到腾讯云镜像
+
+### 已完成
+- 将 `gradle/wrapper/gradle-wrapper.properties` 的 `distributionUrl` 切换为 `https://mirrors.cloud.tencent.com/gradle/gradle-8.14.3-bin.zip`。
+- 在 `settings.gradle` 的 `pluginManagement.repositories` 中加入 `Tencent Maven Mirror`，并用 `https://mirrors.cloud.tencent.com/nexus/repository/maven-public/` 替换默认 `mavenCentral()` 入口。
+
+### 遇到的问题
+- 本次只调整项目级 Gradle wrapper 与 plugin/dependency 解析入口，没有创建用户级 `~/.gradle/init.gradle`，避免影响其他 Gradle 项目。
+
+### 已做决定
+- Gradle 分发包使用腾讯云 `/gradle` 镜像，Maven 依赖解析使用腾讯云 `/nexus/repository/maven-public/` 镜像。
+
+---
 ## 2026-04-20：加入 IME 诊断日志以定位 Java 层还是 native 层失效
 
 ### 已完成

@@ -36,8 +36,26 @@ class ModularUi1TextFieldDetectorTest {
     }
 
     @Test
-    void defaultWhitelistStartsEmpty() {
-        assertFalse(new ModularUi1TextFieldDetector().hasFocusedTextInput(new WhitelistedMui1Screen(true)));
+    void defaultWhitelistDetectsFocusedMui1RuntimeCursorTextField() {
+        assertTrue(
+            new ModularUi1TextFieldDetector()
+                .hasFocusedTextInput(new com.gtnewhorizons.modularui.common.internal.wrapper.ModularGui(true)));
+    }
+
+    @Test
+    void defaultWhitelistIgnoresUnfocusedMui1RuntimeCursorTextField() {
+        assertFalse(
+            new ModularUi1TextFieldDetector()
+                .hasFocusedTextInput(new com.gtnewhorizons.modularui.common.internal.wrapper.ModularGui(false)));
+    }
+
+    @Test
+    void defaultWhitelistDetectsFocusedMui1RuntimeCursorBaseTextFieldSubclass() {
+        assertTrue(
+            new ModularUi1TextFieldDetector()
+                .hasFocusedTextInput(
+                    new com.gtnewhorizons.modularui.common.internal.wrapper.ModularGui(
+                        new reobf.proghatches.gt.metatileentity.util.polyfill.NumericWidget(true))));
     }
 
     private static final class WhitelistedMui1Screen {

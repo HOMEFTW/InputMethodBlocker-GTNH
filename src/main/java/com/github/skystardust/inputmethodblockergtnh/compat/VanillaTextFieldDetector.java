@@ -14,6 +14,7 @@ public class VanillaTextFieldDetector implements FocusDetector {
 
     private static final Set<String> ALWAYS_ENABLED_SCREENS = createAlwaysEnabledScreens();
     private static final Map<String, String[]> FOCUSED_TEXT_FIELD_SCREENS = createFocusedTextFieldScreens();
+    private static final String[] FOCUS_METHOD_NAMES = { "isFocused", "func_146206_l" };
 
     private final Set<String> alwaysEnabledScreens;
     private final Map<String, String[]> focusedTextFieldScreens;
@@ -48,7 +49,7 @@ public class VanillaTextFieldDetector implements FocusDetector {
 
     private boolean hasFocusedField(Object screen, String[] fieldNames) {
         Object fieldValue = findFieldValue(screen, fieldNames);
-        return fieldValue != null && invokeBoolean(fieldValue, "isFocused");
+        return fieldValue != null && invokeAnyBoolean(fieldValue, FOCUS_METHOD_NAMES);
     }
 
     private Object findFieldValue(Object target, String[] fieldNames) {
@@ -65,12 +66,23 @@ public class VanillaTextFieldDetector implements FocusDetector {
         return null;
     }
 
-    private boolean invokeBoolean(Object target, String methodName) {
+    private boolean invokeAnyBoolean(Object target, String[] methodNames) {
+        for (String methodName : methodNames) {
+            Boolean value = invokeBoolean(target, methodName);
+            if (value != null) {
+                return value.booleanValue();
+            }
+        }
+
+        return false;
+    }
+
+    private Boolean invokeBoolean(Object target, String methodName) {
         try {
             Method method = target.getClass().getMethod(methodName);
-            return Boolean.TRUE.equals(method.invoke(target));
+            return Boolean.valueOf(Boolean.TRUE.equals(method.invoke(target)));
         } catch (ReflectiveOperationException e) {
-            return false;
+            return null;
         }
     }
 
