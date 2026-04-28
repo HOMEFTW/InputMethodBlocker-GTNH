@@ -39,15 +39,15 @@ class AeTerminalTextFieldDetectorTest {
     }
 
     @Test
-    void defaultWhitelistDetectsAe2ThingsCraftAmountField() {
-        assertTrue(
+    void defaultWhitelistIgnoresAe2ThingsCraftAmountField() {
+        assertFalse(
             new AeTerminalTextFieldDetector()
                 .hasFocusedTextInput(new com.asdflj.ae2thing.client.gui.GuiCraftAmount(true)));
     }
 
     @Test
-    void defaultWhitelistDetectsAe2CraftAmountField() {
-        assertTrue(
+    void defaultWhitelistIgnoresAe2CraftAmountField() {
+        assertFalse(
             new AeTerminalTextFieldDetector()
                 .hasFocusedTextInput(new appeng.client.gui.implementations.GuiCraftAmount(true)));
     }
@@ -103,8 +103,8 @@ class AeTerminalTextFieldDetectorTest {
     }
 
     @Test
-    void defaultWhitelistDetectsAe2ThingsFluidCraftAmountField() {
-        assertTrue(
+    void defaultWhitelistIgnoresAe2FluidCraftAmountField() {
+        assertFalse(
             new AeTerminalTextFieldDetector()
                 .hasFocusedTextInput(new com.glodblock.github.client.gui.GuiFluidCraftAmount(true)));
     }

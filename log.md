@@ -1,5 +1,36 @@
 # 开发日志
 
+## 2026-04-28：发布 `0.2.1`
+
+### 已完成
+- 将 `gradle.properties` 中的 `modVersion` 提升到 `0.2.1`。
+- 准备重新执行 `test assemble`，生成 `inputmethodblockergtnh-0.2.1.jar` 作为 GitHub Release 资产。
+- 准备将 AE 系选择数量界面焦点白名单排除修复推送到 GitHub，并创建 `0.2.1` 发布版本。
+
+### 已做决定
+- 本次 release 使用标签 `v0.2.1`，Release 标题使用 `0.2.1`，运行用资产为非 `dev`、非 `sources` 的 `inputmethodblockergtnh-0.2.1.jar`。
+
+---
+
+## 2026-04-28：移除 AE 系选择数量界面焦点白名单
+
+### 已完成
+- 重新对照 AE2、AE2Things 与 AE2FC 源码核对截图 `2026-04-28_09.11.32.png` 对应的数量选择界面。
+- 确认非 AE2Things 普通无线终端下单会走 AE2 原生 `appeng.client.gui.implementations.GuiCraftAmount`，焦点字段为其基类 `appeng.client.gui.implementations.GuiAmount.amountTextField`。
+- 确认 AE2Things 的 `MixinGuiCraftAmount` 只把 AE2 原生 `GuiCraftAmount` 混入为 `IGuiCraftAmount`，不会改变运行时 screen class。
+- 按用户要求将 AE2、AE2Things、AE2FC 三个模组的“选择数量 / 下单数量”界面全部移出焦点白名单。
+- 精确排除 `appeng.client.gui.implementations.GuiCraftAmount`、`com.asdflj.ae2thing.client.gui.GuiCraftAmount` 与 `com.glodblock.github.client.gui.GuiFluidCraftAmount`。
+- 回归测试覆盖 `defaultWhitelistIgnoresAe2CraftAmountField`、`defaultWhitelistIgnoresAe2ThingsCraftAmountField` 与 `defaultWhitelistIgnoresAe2FluidCraftAmountField`。
+
+### 遇到的问题
+- **AE2Things mixin 容易误导判断**：AE2Things 会 mixin AE2 原生 `GuiCraftAmount`，但普通 AE2 终端下单界面的实机 screen class 仍是 `appeng.client.gui.implementations.GuiCraftAmount`；AE2Things 自己的无线二合一/灌注样板终端则使用 `com.asdflj.ae2thing.client.gui.GuiCraftAmount`；AE2FC 使用 `com.glodblock.github.client.gui.GuiFluidCraftAmount`。
+- **白名单入口在基类上**：直接移除 `appeng.client.gui.implementations.GuiAmount.amountTextField` 会影响其它继承 `GuiAmount` 的 AE2 数量/配置界面，因此本次使用精确排除，而不是删除整个基类白名单。
+
+### 已做决定
+- 对选择数量界面采用精确 screen 排除，不移除 `GuiAmount` / `FCGuiAmount` 基类白名单，避免误伤其它数量/配置界面。
+
+---
+
 ## 2026-04-27：发布 `0.2.0`
 
 ### 已完成

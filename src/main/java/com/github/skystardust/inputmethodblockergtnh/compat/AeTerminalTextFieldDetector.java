@@ -10,6 +10,7 @@ public class AeTerminalTextFieldDetector extends WhitelistedReflectiveTextFieldD
 
     private static final Set<String> TEXT_FIELD_CLASSES = createTextFieldClasses();
     private static final Map<String, String[]> SCREEN_FIELD_WHITELIST = createScreenFieldWhitelist();
+    private static final Set<String> SCREEN_CLASS_EXCLUSIONS = createScreenClassExclusions();
     private static final Set<String> FOCUS_METHOD_NAMES = createFocusMethodNames();
 
     public AeTerminalTextFieldDetector() {
@@ -27,6 +28,15 @@ public class AeTerminalTextFieldDetector extends WhitelistedReflectiveTextFieldD
         super(textFieldClasses, screenFieldWhitelist, Collections.emptyList(), focusMethodNames);
     }
 
+    @Override
+    public boolean hasFocusedTextInput(Object screen) {
+        if (screen != null && matchesAnyClass(screen, SCREEN_CLASS_EXCLUSIONS)) {
+            return false;
+        }
+
+        return super.hasFocusedTextInput(screen);
+    }
+
     private static Set<String> createTextFieldClasses() {
         Set<String> classes = new HashSet<>();
         classes.add("net.minecraft.client.gui.GuiTextField");
@@ -42,6 +52,14 @@ public class AeTerminalTextFieldDetector extends WhitelistedReflectiveTextFieldD
         methods.add("isFocused");
         methods.add("func_146206_l");
         return Collections.unmodifiableSet(methods);
+    }
+
+    private static Set<String> createScreenClassExclusions() {
+        Set<String> screens = new HashSet<>();
+        screens.add("appeng.client.gui.implementations.GuiCraftAmount");
+        screens.add("com.asdflj.ae2thing.client.gui.GuiCraftAmount");
+        screens.add("com.glodblock.github.client.gui.GuiFluidCraftAmount");
+        return Collections.unmodifiableSet(screens);
     }
 
     private static Map<String, String[]> createScreenFieldWhitelist() {
@@ -93,5 +111,25 @@ public class AeTerminalTextFieldDetector extends WhitelistedReflectiveTextFieldD
         screens.put("com.asdflj.ae2thing.client.gui.GuiRenamer", new String[] { "textField" });
         screens.put("com.asdflj.ae2thing.client.gui.GuiFluidPacketEncoder", new String[] { "level" });
         return Collections.unmodifiableMap(screens);
+    }
+
+    private boolean matchesAnyClass(Object screen, Set<String> classNames) {
+        for (String className : classNames) {
+            if (matchesClass(screen, className)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean matchesClass(Object screen, String className) {
+        for (Class<?> type = screen.getClass(); type != null && type != Object.class; type = type.getSuperclass()) {
+            if (className.equals(type.getName())) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
